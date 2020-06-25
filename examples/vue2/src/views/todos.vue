@@ -2,12 +2,12 @@
   <div id="app">
     <section class="todoapp">
       <header class="header">
-        <h1>待办</h1>
+        <h1>备忘录</h1>
         <input
           class="new-todo"
           autofocus
           autocomplete="off"
-          placeholder="需要做什么 ?"
+          :placeholder="placeholder"
           v-model="newTodo"
           @keyup.enter="addTodo"
         />
@@ -46,7 +46,7 @@
           {{ remaining | pluralize }} left
         </span>
         <ul class="filters">
-          <template v-for='item in ["all","active","completed"]'>
+          <template v-for="item in ['all','active','completed']">
             <li :key="item">
               <a @click="handleTodoState(item)" :class="{ selected: visibility == item }">{{item}}</a>
             </li>
@@ -59,22 +59,14 @@
         >Clear completed</button>
       </footer>
     </section>
-    <footer class="info">
-      <p>Double-click to edit a todo</p>
-      <p>
-        Written by
-        <a href="http://www.songdonghong.com/about-me.html">宋冬红</a>
-      </p>
-      <p>
-        Part of
-        <a href="http://todomvc.com">TodoMVC</a>
-      </p>
-    </footer>
+    <Footer />
   </div>
 </template>
 
 <script>
-
+import Footer from "../components/Footer"
+import { mapActions, mapState } from "vuex"
+const MAX_INPUT = 10
 var STORAGE_KEY = "todos-vuejs-2.0";
 var todoStorage = {
   fetch: function () {
@@ -111,21 +103,35 @@ export default {
   name: 'App',
   data() {
     return {
+      placeholder:"需要做什么？",
       todos: todoStorage.fetch(),
       newTodo: "",
       editedTodo: null,
       visibility: "all"
     }
   },
+  components: {
+    Footer
+  },
   watch: {
     todos: {
       handler: function (todos) {
-        todoStorage.save(todos);
+        if(todos.length < MAX_INPUT){
+          todoStorage.save(todos);
+        }else{
+          this.placeholder = `最多是个${MAX_INPUT}个`
+          setTimeout(()=>{
+            this.placeholder = "需要做什么？"
+          },3000)
+        }
       },
       deep: true
     }
   },
   computed: {
+    ...mapState('todo', [
+      'todoList'
+    ]),
     filteredTodos: function () {
       return filters[this.visibility](this.todos);
     },
@@ -134,11 +140,9 @@ export default {
     },
     allDone: {
       get: function () {
-        console.log("allDone:get")
         return this.remaining === 0;
       },
       set: function (value) {
-        console.log("allDone:set", value)
         this.todos.forEach(function (todo) {
           todo.completed = value;
         });
@@ -152,6 +156,7 @@ export default {
     }
   },
   methods: {
+    ...mapActions('todo', ['getTodos']),
     handleTodoState(val) {
       this.visibility = val
     },
@@ -187,12 +192,10 @@ export default {
         this.removeTodo(todo);
       }
     },
-
     cancelEdit: function (todo) {
       this.editedTodo = null;
       todo.title = this.beforeEditCache;
     },
-
     removeCompleted: function () {
       this.todos = filters.active(this.todos);
     }
@@ -202,6 +205,15 @@ export default {
       if (binding.value) {
         el.focus();
       }
+    }
+  },
+  async created() {
+    try {
+      let data = await this.getTodos()
+      this.todos = this.todos.concat(data['data']['list'])
+      console.log("created", this.todos)
+    } catch (e) {
+      console.error("data", e)
     }
   }
 }
