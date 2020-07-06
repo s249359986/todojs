@@ -63,51 +63,56 @@
   </div>
 </template>
 
-<script>
-import myFooter from "../components/Footer"
-import { mapActions, mapState } from "vuex"
+<script lang="ts">
+import myFooter from '@/components/Footer.vue'
+import { mapActions, mapState } from 'vuex'
+import { Todo } from '@/types/index'
+import Vue from 'vue'
 const MAX_INPUT = 10
-var STORAGE_KEY = "todos-vuejs-2.0";
-var todoStorage = {
+const STORAGE_KEY = 'todos-vuejs-2.0'
+
+const todoStorage = {
   fetch: function () {
-    var todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    todos.forEach(function (todo, index) {
-      todo.id = index;
-    });
-    todoStorage.uid = todos.length;
-    return todos;
+    const todos: Array<Todo> = JSON.parse(
+      localStorage.getItem(STORAGE_KEY) || '[]'
+    )
+    todos.forEach(function (todo: Todo, index: number | string) {
+      todo.id = index
+    })
+    todoStorage.uid = todos.length
+    return todos
   },
-  save: function (todos) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+  save: function (todos: Todo) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos))
   }
-};
+}
 
 // visibility filters
-var filters = {
-  all: function (todos) {
-    return todos;
+const filters = {
+  all: function (todos: Array<Todo>) {
+    return todos
   },
-  active: function (todos) {
+  active: function (todos: Array<Todo>) {
     return todos.filter(function (todo) {
-      return !todo.completed;
-    });
+      return !todo.completed
+    })
   },
-  completed: function (todos) {
-    return todos.filter(function (todo) {
-      return todo.completed;
-    });
+  completed: function (todos: Array<Todo>) {
+    return todos.filter(function (todo: Todo) {
+      return todo.completed
+    })
   }
-};
+}
 
-export default {
+export default Vue.extend({
   name: 'App',
-  data() {
+  data () {
     return {
-      placeholder:"需要做什么？",
+      placeholder: '需要做什么？',
       todos: todoStorage.fetch(),
-      newTodo: "",
+      newTodo: '',
       editedTodo: null,
-      visibility: "all"
+      visibility: 'all'
     }
   },
   components: {
@@ -115,108 +120,107 @@ export default {
   },
   watch: {
     todos: {
-      handler: function (todos) {
-        if(todos.length < MAX_INPUT){
-          todoStorage.save(todos);
-        }else{
+      handler (todos): void {
+        if (todos.length < MAX_INPUT) {
+          todoStorage.save(todos)
+        } else {
           this.placeholder = `最多是个${MAX_INPUT}个`
-          setTimeout(()=>{
-            this.placeholder = "需要做什么？"
-          },3000)
+          setTimeout(() => {
+            this.placeholder = '需要做什么？'
+          }, 3000)
         }
       },
       deep: true
     }
   },
   computed: {
-    ...mapState('todo', [
-      'todoList'
-    ]),
+    ...mapState('todo', ['todoList']),
     filteredTodos: function () {
-      return filters[this.visibility](this.todos);
+      return filters[this.visibility](this.todos)
     },
-    remaining: function () {
-      return filters.active(this.todos).length;
+    remaining () {
+      return filters.active(this.todos).length
     },
     allDone: {
-      get: function () {
-        return this.remaining === 0;
+      get () {
+        return this.remaining === 0
       },
-      set: function (value) {
-        this.todos.forEach(function (todo) {
-          todo.completed = value;
-        });
+      set (value) {
+        this.todos.forEach(function (todo: Todo) {
+          todo.completed = value
+        })
       }
     }
   },
 
   filters: {
-    pluralize: function (n) {
-      return n === 1 ? "item" : "items";
+    pluralize: function (n: unknown) {
+      return n === 1 ? 'item' : 'items'
     }
   },
   methods: {
     ...mapActions('todo', ['getTodos']),
-    handleTodoState(val) {
+    handleTodoState (val: unknown) {
       this.visibility = val
     },
     addTodo: function () {
-      var value = this.newTodo && this.newTodo.trim();
+      const value = this.newTodo && this.newTodo.trim()
       if (!value) {
-        return;
+        return
       }
       this.todos.push({
         id: todoStorage.uid++,
         title: value,
         completed: false
-      });
-      this.newTodo = "";
+      })
+      this.newTodo = ''
     },
 
-    removeTodo: function (todo) {
-      this.todos.splice(this.todos.indexOf(todo), 1);
+    removeTodo: function (todo: Todo) {
+      this.todos.splice(this.todos.indexOf(todo), 1)
     },
 
     editTodo: function (todo) {
-      this.beforeEditCache = todo.title;
-      this.editedTodo = todo;
+      this.beforeEditCache = todo.title
+      this.editedTodo = todo
     },
 
-    doneEdit: function (todo) {
+    doneEdit: function (todo: Todo) {
       if (!this.editedTodo) {
-        return;
+        return
       }
-      this.editedTodo = null;
-      todo.title = todo.title.trim();
+      this.editedTodo = null
+      todo.title = todo.title.trim()
       if (!todo.title) {
-        this.removeTodo(todo);
+        this.removeTodo(todo)
       }
     },
-    cancelEdit: function (todo) {
-      this.editedTodo = null;
-      todo.title = this.beforeEditCache;
+    cancelEdit: function (todo: Todo) {
+      this.editedTodo = null
+      todo.title = this.beforeEditCache
     },
     removeCompleted: function () {
-      this.todos = filters.active(this.todos);
+      this.todos = filters.active(this.todos)
     }
   },
   directives: {
-    "todo-focus": function (el, binding) {
+    'todo-focus': function (el, binding) {
       if (binding.value) {
-        el.focus();
+        el.focus()
       }
     }
   },
-  async created() {
+  async created () {
     try {
-      let data = await this.getTodos()
-      this.todos = this.todos.concat(data['data']['list'])
-      console.log("created", this.todos)
+      const data = await this.getTodos()
+      this.todos = this.todos.concat(data.data.list)
+      console.log('created', this.todos)
     } catch (e) {
-      console.error("data", e)
+      console.error('data', e)
     }
   }
-}
+})
+
 </script>
 
 <style>
