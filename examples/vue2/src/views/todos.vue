@@ -25,7 +25,7 @@
           >
             <div class="view">
               <input class="toggle" type="checkbox" v-model="todo.completed" />
-              <label @dblclick="editTodo(todo)">{{ todo.title }}</label>
+              <label @click="editTodo(todo)">{{ todo.title }}</label>
               <button class="destroy" @click="removeTodo(todo)"></button>
             </div>
             <input
@@ -178,6 +178,7 @@ export default {
     },
 
     editTodo: function (todo) {
+      console.log("editTodo",todo)
       this.beforeEditCache = todo.title;
       this.editedTodo = todo;
     },
